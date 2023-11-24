@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "myprot.h"
 #include <sys/select.h>
@@ -37,6 +38,8 @@ void removeInactiveServers(struct Server *servers);
 int setup_socket(struct addrinfo **r, const char *port, int *soc);
 
 void cleanup(int soc, struct addrinfo *r);
+
+struct Protocol mp;
 
 //**** MAIN ****//
 
@@ -98,6 +101,14 @@ int main()
                 else if (read_data(received_buffer, id, &data) == 0)
                 {
                     printf("Got data A: %s %d\n", id, data);
+                    printf("Send request to server B");
+
+                    snprintf(mp.data, 4, "%d", data);
+                    strncpy(mp.type, "SEDATA", 7);
+
+                    sendto(soc, (const char *)&mp, MAX_BUFF, MSG_CONFIRM,
+                           (const struct sockaddr *)&servers[1].server_ip,
+                           saddr_len);
                 }
             }
         }
@@ -183,12 +194,9 @@ void removeInactiveServers(struct Server *servers)
     gettimeofday(&currentTime, NULL);
     long currentMillis = currentTime.tv_sec * 1000 + currentTime.tv_usec / 1000;
 
-    for (int i = 0; i < 2; ++i)
+    if ((currentMillis - servers[0].last_hello) > 11550 && servers[0].last_hello != 0)
     {
-        if ((currentMillis - servers[i].last_hello) > 11550 && servers[i].last_hello != 0)
-        {
-            servers[i].last_hello = 0; // Assuming 0 indicates an uninitialized or removed server
-            printf("Removed server %s\n", servers[i].id);
-        }
+        servers[0].last_hello = 0; // Assuming 0 indicates an uninitialized or removed server
+        printf("Removed server %s\n", servers[0].id);
     }
 }
