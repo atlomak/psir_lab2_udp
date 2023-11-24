@@ -101,14 +101,18 @@ int main()
                 else if (read_data(received_buffer, id, &data) == 0)
                 {
                     printf("Got data A: %s %d\n", id, data);
-                    printf("Send request to server B");
 
-                    snprintf(mp.data, 4, "%d", data);
-                    strncpy(mp.type, "SEDATA", 7);
+                    if (data > 0) // To be set
+                    {
 
-                    sendto(soc, (const char *)&mp, MAX_BUFF, MSG_CONFIRM,
-                           (const struct sockaddr *)&servers[1].server_ip,
-                           saddr_len);
+                        snprintf(mp.data, 4, "%d", data);
+                        strncpy(mp.type, "SEDATA", 7);
+
+                        int s = sendto(soc, (const char *)&mp, MAX_BUFF, MSG_CONFIRM,
+                                       (const struct sockaddr *)&servers[1].server_ip,
+                                       saddr_len);
+                        printf("Send request to server B. Send bytes: %d\n", s);
+                    }
                 }
             }
         }
